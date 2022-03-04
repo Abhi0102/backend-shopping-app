@@ -1,0 +1,35 @@
+{
+  "name": "shoppingstore",
+  "version": "1.0.0",
+  "description": "A backend API for shopping store",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [
+    "api",
+    "backend",
+    "shopping"
+  ],
+  "author": "Abhishek Sharma",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.28.1",
+    "cookie-parser": "^1.4.6",
+    "date-format": "^4.0.4",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "express-fileupload": "^1.3.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.2.4",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.7.2",
+    "razorpay": "^2.8.0",
+    "stripe": "^8.207.0",
+    "swagger-ui-express": "^4.3.0",
+    "validator": "^13.7.0",
+    "yamljs": "^0.3.0"
+  }
+}
