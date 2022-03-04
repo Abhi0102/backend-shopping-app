@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
-
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const userSchema = mongoose.Schema(
   {
     name: {
@@ -62,10 +63,40 @@ userSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, 10);
 });
 
+// Methods
+
 // Validate Password with user entered Password
 
 userSchema.methods.isValidPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// JWT Tokens
+
+userSchema.methods.getJwtToken = async function () {
+  return jwt.sign({ id: this._id, name: this.name }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRY,
+  });
+};
+
+// Forgot Password token - string -> JWT is not preferable here.
+
+userSchema.methods.forgotPassword = async function () {
+  // generate random long string
+  const token = crypto.randomBytes(20).toString("hex");
+
+  //    Getting a hash - hashed value will stored in DB.
+  //    Whenever a token is sent from user it will be hashed and compare with DB value.
+  //    Thus ensuring that it is not tempered.
+
+  this.forgotPasswordToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  this.forgotPasswordExpiry = Date.now() + process.env.FORGOT_EXPIRY;
+
+  return token;
 };
 
 module.exports = mongoose.model("User", userSchema);
