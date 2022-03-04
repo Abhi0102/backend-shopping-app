@@ -1,0 +1,50 @@
+openapi: 3.0.0
+info:
+  title: Shopping App API
+  description: An API created using node.js to handle shopping related operations
+  version: 1.0.1
+  contact:
+    email: abhishek1sharma14.1998@gmail.com
+
+servers:
+  - url: "{protocol}://localhost:8000/api/{version}"
+    description: Local host initial URL
+    variables:
+      version:
+        enum:
+          - v1
+        default: v1
+      protocol:
+        enum:
+          - http
+          - https
+        default: http
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+paths:
+  /:
+    get:
+      tags:
+        - Test Route
+      summary: First test Route
+      responses:
+        "200":
+          description: All Good
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  greetings:
+                    type: string
