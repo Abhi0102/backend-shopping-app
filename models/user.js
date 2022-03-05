@@ -36,11 +36,9 @@ const userSchema = mongoose.Schema(
     photo: {
       id: {
         type: String,
-        required: true,
       },
       secure_url: {
         type: String,
-        required: true,
       },
     },
     forgotPasswordToken: String,
@@ -73,7 +71,7 @@ userSchema.methods.isValidPassword = async function (enteredPassword) {
 
 // JWT Tokens
 
-userSchema.methods.getJwtToken = async function () {
+userSchema.methods.getJwtToken = function () {
   return jwt.sign({ id: this._id, name: this.name }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRY,
   });

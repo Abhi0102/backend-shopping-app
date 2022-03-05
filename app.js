@@ -10,6 +10,9 @@ const swaggerUi = require("swagger-ui-express");
 const YAML = require("yamljs");
 const swaggerDocument = YAML.load("./swagger.yaml");
 
+// EJS
+app.set("view engine", "ejs");
+
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -22,10 +25,16 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // Logger Middleware
 app.use(morgan("tiny"));
 
-// Routers
+// Routes
 const home = require("./routes/home");
+const user = require("./routes/user");
 
 //Route Middleware
 app.use("/api/v1", home);
+app.use("/api/v1", user);
+
+// Test EJS
+
+app.get("/testpic", (req, res) => res.render("signup"));
 
 module.exports = app;
