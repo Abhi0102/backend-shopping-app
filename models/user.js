@@ -79,7 +79,7 @@ userSchema.methods.getJwtToken = function () {
 
 // Forgot Password token - string -> JWT is not preferable here.
 
-userSchema.methods.forgotPassword = async function () {
+userSchema.methods.forgotPassword = function () {
   // generate random long string
   const token = crypto.randomBytes(20).toString("hex");
 
@@ -92,7 +92,7 @@ userSchema.methods.forgotPassword = async function () {
     .update(token)
     .digest("hex");
 
-  this.forgotPasswordExpiry = Date.now() + process.env.FORGOT_EXPIRY;
+  this.forgotPasswordExpiry = Date.now() + 20 * 60 * 1000;
 
   return token;
 };

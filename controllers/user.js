@@ -3,6 +3,8 @@ const BigPromise = require("../middlewares/bigPromise");
 const cookietoken = require("../utils/cookietoken");
 const fileUpload = require("express-fileupload");
 const cloudinary = require("cloudinary").v2;
+const emailer = require("../utils/emailer");
+const crypto = require("crypto");
 
 exports.signup = BigPromise(async (req, res, next) => {
   //
@@ -71,4 +73,64 @@ exports.logout = BigPromise(async (req, res, next) => {
     success: true,
     message: "Successfully Logged out",
   });
+});
+
+exports.forgotPassword = BigPromise(async (req, res, next) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return next(new Error("User Doesn't exist"));
+  }
+
+  const forgotToken = user.forgotPassword();
+
+  await user.save({ validateBeforeSave: false });
+
+  const forgotUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/password/reset/${forgotToken}`;
+
+  const message = `Paste this link in URL \n\n ${forgotUrl}`;
+
+  try {
+    await emailer({
+      toEmail: user.email,
+      subject: "Password Reset Email | Shopping App",
+      message,
+    });
+
+    res.status(200).json({ success: true, message: "email sent successfully" });
+  } catch (error) {
+    user.forgotPasswordToken = undefined;
+    user.forgotPasswordExpiry = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return next(new Error(error.message));
+  }
+});
+
+exports.forgotPasswordConfirm = BigPromise(async (req, res, next) => {
+  const token = req.params.token;
+
+  const encryptToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await User.findOne({
+    encryptToken,
+    forgotPasswordExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new Error("Token is Invalid or Expired."));
+  }
+
+  if (req.body.password !== req.body.confirmPassword) {
+    return next(new Error("Password and confirmed Password does not match."));
+  }
+  user.password = req.body.password;
+  user.forgotPasswordToken = undefined;
+  user.forgotPasswordExpiry = undefined;
+  await user.save();
+  cookietoken(user, res);
 });
