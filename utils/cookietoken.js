@@ -11,7 +11,7 @@ const cookietoken = (user, res) => {
   user.password = undefined;
   res
     .status(200)
-    .cookie("token", token, options)
+    .cookie(process.env.COOKIE_TOKEN, token, options)
     .json({ success: true, token, user });
 };
 
