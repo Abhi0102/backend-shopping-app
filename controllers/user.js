@@ -29,3 +29,35 @@ exports.signup = BigPromise(async (req, res, next) => {
 
   cookietoken(user, res);
 });
+
+exports.login = BigPromise(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return next(new Error("Please provide email and password"));
+  }
+
+  // Check User in DB
+
+  const user = await User.findOne({ email }).select("+password");
+
+  // If User not found
+
+  if (!user) {
+    return next(new Error("User not register."));
+  }
+
+  // Compare Password
+
+  const isPasswordValid = await user.isValidPassword(password);
+
+  // If Passoword doesn't match
+
+  if (!isPasswordValid) {
+    return next(new Error("Password is not correct."));
+  }
+
+  // If Password is correct
+
+  cookietoken(user, res);
+});
