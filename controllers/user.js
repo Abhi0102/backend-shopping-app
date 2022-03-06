@@ -134,3 +134,62 @@ exports.forgotPasswordConfirm = BigPromise(async (req, res, next) => {
   await user.save();
   cookietoken(user, res);
 });
+
+exports.getUserDetail = BigPromise(async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+exports.changePassword = BigPromise(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const user = await User.findById(userId).select("+password");
+
+  const isValidPassword = await user.isValidPassword(req.body.oldPassword);
+
+  if (!isValidPassword) {
+    return next(new Error("Old Password does not matches."));
+  }
+
+  user.password = req.body.newPassword;
+  await user.save();
+
+  cookietoken(user, res);
+});
+
+exports.updateUserDetails = BigPromise(async (req, res, next) => {
+  const newData = { name: req.body.name, email: req.body.email };
+  if (req.files) {
+    const user = await User.findById(req.user.id);
+
+    const img_id = user.photo.id;
+
+    // Delete Cloudinary Photo
+    const resp = await cloudinary.uploader.destroy(img_id);
+
+    const result = await cloudinary.uploader.upload(
+      req.files.photo.tempFilePath,
+      {
+        folder: "users",
+        width: 150,
+        crop: "scale",
+      }
+    );
+
+    newData.photo = {
+      id: result.public_id,
+      secure_url: result.secure_url,
+    };
+  }
+  const user = await User.findByIdAndUpdate(req.user.id, newData, {
+    new: true,
+    runValidators: true,
+    useFindAndModify: false,
+  });
+
+  res.status(200).json({ success: true, user });
+});
