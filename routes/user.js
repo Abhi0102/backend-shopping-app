@@ -11,6 +11,9 @@ const {
   changePassword,
   updateUserDetails,
   adminAllUsers,
+  adminSingleUsers,
+  adminUpdateUserDetails,
+  adminDeleteUser,
 } = require("../controllers/user");
 const { isLoggedIn, customRole } = require("../middlewares/user");
 
@@ -29,5 +32,10 @@ Router.route("/admin/users").get(
   customRole("admin"),
   adminAllUsers
 );
+
+Router.route("/admin/user/:id")
+  .get(isLoggedIn, customRole("admin"), adminSingleUsers)
+  .put(isLoggedIn, customRole("admin"), adminUpdateUserDetails)
+  .delete(isLoggedIn, customRole("admin"), adminDeleteUser);
 
 module.exports = Router;
