@@ -81,3 +81,137 @@ exports.getOneProduct = BigPromise(async (req, res, next) => {
 
   res.status(200).json({ success: true, product });
 });
+
+exports.adminUpdateOneProduct = BigPromise(async (req, res, next) => {
+  let product = await Product.findById(req.params.id);
+
+  if (!product) {
+    return next(new Error("No Product Found."));
+  }
+
+  if (req.files) {
+    //   Delete Previous Photos
+    for (let i in product.photos) {
+      const result = await cloudinary.uploader.destroy(product.photos[i].id);
+    }
+
+    //   Uploading new Photos
+
+    let imgArray = [];
+
+    for (let i in req.files.photos) {
+      let result = await cloudinary.uploader.upload(
+        req.files.photos[i].tempFilePath,
+        {
+          folder: "products",
+        }
+      );
+      imgArray.push({
+        id: result.public_id,
+        secure_url: result.secure_url,
+      });
+    }
+
+    req.body.photos = imgArray;
+  }
+
+  product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({ success: true, product });
+});
+
+exports.adminDeleteOneProduct = BigPromise(async (req, res, next) => {
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    return next(new Error("No Product Found."));
+  }
+
+  //   Delete Images
+  for (let i in product.photos) {
+    const result = await cloudinary.uploader.destroy(product.photos[i].id);
+  }
+
+  await product.remove();
+
+  res
+    .status(200)
+    .json({ success: true, message: "Product successfully deleted." });
+});
+
+exports.addReview = BigPromise(async (req, res, next) => {
+  const { rating, comment, productId } = req.body;
+
+  const review = {
+    user: req.user._id,
+    name: req.user.name,
+    rating: Number(rating),
+    comment,
+  };
+
+  const product = await Product.findById(productId);
+
+  if (!product) {
+    return next(new Error("Product not Found"));
+  }
+
+  const alreadyReviewed = product.reviews.find(
+    (rev) => rev.user.toString() === req.user._id.toString()
+  );
+
+  if (alreadyReviewed) {
+    product.reviews.forEach((element) => {
+      if (element.user.toString() === req.user._id.toString()) {
+        element.comment = comment;
+        element.rating = rating;
+      }
+    });
+  } else {
+    product.reviews.push(review);
+    product.noOfReviews = product.reviews.length;
+  }
+
+  //   Adjust Rating
+
+  product.ratings =
+    product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+    product.reviews.length;
+
+  await product.save({ validateBeforeSave: false });
+
+  res.status(200).json({ success: true });
+});
+
+exports.deleteReview = BigPromise(async (req, res, next) => {
+  const { productId } = req.query;
+  const product = await Product.findById(productId);
+
+  if (!product) {
+    return next(new Error("No Product Found."));
+  }
+
+  const reviews = product.reviews.filter(
+    (rev) => rev.user.toString() === req.user._id.toString()
+  );
+
+  const noOfReviews = reviews.length;
+
+  //   Adjust Rating
+
+  product.ratings =
+    product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+    product.reviews.length;
+
+  // Updating the product
+
+  await product.findByIdAndUpdate(
+    productId,
+    { reviews, rating, noOfReviews },
+    { new: true, runValidators: true }
+  );
+
+  res.status(200).json({ success: true });
+});
