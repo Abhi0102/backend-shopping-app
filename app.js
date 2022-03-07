@@ -40,5 +40,6 @@ app.use("/api/v1", product);
 // Test EJS
 
 app.get("/testpic", (req, res) => res.render("signup"));
+app.get("/addproduct", (req, res) => res.render("addproduct"));
 
 module.exports = app;

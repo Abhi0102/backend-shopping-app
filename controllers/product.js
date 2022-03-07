@@ -1,9 +1,9 @@
 const Product = require("../models/product");
 const BigPromise = require("../middlewares/bigPromise");
+const WhereClause = require("../utils/whereclause");
 const cloudinary = require("cloudinary").v2;
 
 exports.testProduct = BigPromise(async (req, res, next) => {
-  console.log(req.query);
   res.status(200).json({
     success: true,
     greatings: "Hello there !!!",
@@ -34,7 +34,7 @@ exports.addProduct = BigPromise(async (req, res, next) => {
 
   req.body.photos = imgArray;
 
-  req.body.user = req.body.id;
+  req.body.user = req.user.id;
 
   const product = await Product.create(req.body);
 
@@ -42,4 +42,26 @@ exports.addProduct = BigPromise(async (req, res, next) => {
     success: true,
     product,
   });
+});
+
+exports.getProduct = BigPromise(async (req, res, next) => {
+  const resultPerPage = 6;
+  const totalCount = await Product.countDocuments();
+
+  const productsObj = new WhereClause(Product.find(), req.query)
+    .search()
+    .filter();
+  // .pager();
+
+  let products = productsObj.base;
+
+  const filteredProductNumber = products.length;
+
+  productsObj.pager(resultPerPage);
+
+  products = await productsObj.base;
+
+  res
+    .status(200)
+    .json({ success: true, products, filteredProductNumber, totalCount });
 });
